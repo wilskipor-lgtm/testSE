@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELOOP | Curator of Pre-loved Goods</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 20px; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
+        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* Hide Scrollbar for horizontal scroll areas */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Bottom Nav Transition */
+        #bottomNav { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        /* FAB Pulse Animation */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .fab-pulse { animation: pulse-ring 2s infinite; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-24 right-5 z-[70] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-200 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-stone-600 hover:text-emerald-700">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <div class="flex-shrink-0 flex items-center">
+                    <h1 class="text-2xl font-bold tracking-tighter text-emerald-800 cursor-pointer" onclick="window.scrollTo(0,0)">RELOOP.</h1>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-8 text-sm font-semibold text-stone-600 uppercase tracking-wider">
+                    <a href="#collection" class="hover:text-emerald-600 transition">Shop All</a>
+                    <a href="#" class="hover:text-emerald-600 transition">Vintage</a>
+                    <a href="#" class="hover:text-emerald-600 transition">Accessories</a>
+                    <a href="#footer" class="hover:text-emerald-600 transition">About</a>
+                </div>
+
+                <div class="flex items-center space-x-4 sm:space-x-6">
+                    <button onclick="toggleSearch()" class="text-stone-600 hover:text-emerald-600 transition hidden sm:block" aria-label="Search">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </button>
+                    <button onclick="toggleWishlist()" class="text-stone-600 hover:text-emerald-600 transition relative" aria-label="Wishlist">
+                        <i class="fa-solid fa-heart text-lg"></i>
+                        <span id="wishlistCount" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center hidden transform scale-0 transition-transform duration-200">0</span>
+                    </button>
+                    <button onclick="toggleCart()" class="text-stone-600 hover:text-emerald-600 transition relative" aria-label="Cart">
+                        <i class="fa-solid fa-cart-shopping text-lg"></i>
+                        <span id="cartCount" class="absolute -top-1.5 -right-1.5 bg-emerald-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center transform scale-0 transition-transform duration-200">0</span>
+                    </button>
+                    <!-- User Profile Icon -->
+                    <button onclick="toggleAccount()" class="w-9 h-9 rounded-full bg-stone-200 overflow-hidden border-2 border-transparent hover:border-emerald-500 transition relative" aria-label="Account">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" alt="User" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-stone-100 absolute w-full shadow-lg">
+            <div class="px-4 pt-2 pb-6 space-y-2">
+                <a href="#collection" onclick="toggleMobileMenu()" class="block px-3 py-3 text-base font-medium text-stone-700 hover:bg-stone-50 hover:text-emerald-600 rounded-md">Shop All</a>
+                <a href="#" onclick="toggleMobileMenu()" class="block px-3 py-3 text-base font-medium text-stone-700 hover:bg-stone-50 hover:text-emerald-600 rounded-md">Vintage</a>
+                <a href="#" onclick="toggleMobileMenu()" class="block px-3 py-3 text-base font-medium text-stone-700 hover:bg-stone-50 hover:text-emerald-600 rounded-md">Accessories</a>
+                <a href="#footer" onclick="toggleMobileMenu()" class="block px-3 py-3 text-base font-medium text-stone-700 hover:bg-stone-50 hover:text-emerald-600 rounded-md">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity opacity-0" onclick="if(event.target === this) toggleSearch()">
+        <div class="max-w-2xl mx-auto mt-20 bg-white rounded-2xl shadow-2xl p-6 mx-4 transform scale-95 transition-transform duration-200" id="searchContent">
+            <div class="flex items-center gap-4 mb-6 border-b border-stone-100 pb-4">
+                <i class="fa-solid fa-magnifying-glass text-emerald-600"></i>
+                <input type="text" id="searchInput" placeholder="Cari barang (misal: denim, jacket...)" 
+                       class="flex-1 text-lg outline-none placeholder:text-stone-400 text-stone-800" onkeyup="performSearch()">
+                <button onclick="toggleSearch()" class="text-stone-400 hover:text-stone-900 transition p-2">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="searchResults" class="space-y-2 max-h-[60vh] overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div id="cartBackdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity duration-300" onclick="toggleCart()"></div>
+    <div id="cartSidebar" class="fixed right-0 top-0 h-full w-full sm:w-[400px] bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col">
+        <div class="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+            <h3 class="text-xl font-bold text-stone-800">Keranjang Belanja</h3>
+            <button onclick="toggleCart()" class="text-stone-400 hover:text-stone-900 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+        <div class="border-t border-stone-200 p-6 bg-stone-50">
+            <div class="flex justify-between mb-2 text-sm text-stone-500">
+                <span>Subtotal</span>
+                <span id="cartSubtotal" class="text-stone-900">Rp 0</span>
+            </div>
+            <div class="flex justify-between mb-6 text-xl font-bold text-stone-900">
+                <span>Total</span>
+                <span id="cartTotal" class="text-emerald-700">Rp 0</span>
+            </div>
+            <button onclick="checkout()" class="w-full bg-emerald-700 text-white py-4 rounded-xl font-semibold hover:bg-emerald-600 transition shadow-lg shadow-emerald-700/20 flex justify-center items-center gap-2 group">
+                Checkout <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Wishlist Sidebar -->
+    <div id="wishlistBackdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity duration-300" onclick="toggleWishlist()"></div>
+    <div id="wishlistSidebar" class="fixed right-0 top-0 h-full w-full sm:w-[400px] bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col">
+        <div class="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+            <h3 class="text-xl font-bold text-stone-800">Wishlist</h3>
+            <button onclick="toggleWishlist()" class="text-stone-400 hover:text-stone-900 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div id="wishlistItems" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+    </div>
+
+    <!-- ACCOUNT MODAL -->
+    <div id="accountBackdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity duration-300" onclick="toggleAccount()"></div>
+    <div id="accountModal" class="fixed right-0 top-0 h-full w-full sm:w-[450px] bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col">
+        <!-- Login State (Simulated) -->
+        <div id="accountLoggedIn">
+            <div class="relative h-40 bg-emerald-800">
+                <button onclick="toggleAccount()" class="absolute top-4 right-4 text-white/80 hover:text-white p-2"><i class="fa-solid fa-times text-xl"></i></button>
+                <div class="absolute -bottom-12 left-6">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" class="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover">
+                </div>
+            </div>
+            <div class="mt-14 px-6">
+                <h2 class="text-2xl font-bold text-stone-800">Sarah Jenkins</h2>
+                <p class="text-stone-500 text-sm">Member since 2023</p>
+            </div>
+            
+            <div class="p-6 space-y-6 overflow-y-auto">
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="p-3 bg-stone-50 rounded-xl"><span class="block font-bold text-xl text-emerald-700">12</span><span class="text-xs text-stone-500 uppercase font-bold">Orders</span></div>
+                    <div class="p-3 bg-stone-50 rounded-xl"><span class="block font-bold text-xl text-emerald-700">4</span><span class="text-xs text-stone-500 uppercase font-bold">Reviews</span></div>
+                    <div class="p-3 bg-stone-50 rounded-xl"><span class="block font-bold text-xl text-emerald-700">850</span><span class="text-xs text-stone-500 uppercase font-bold">Points</span></div>
+                </div>
+
+                <h3 class="font-bold text-lg">Recent Orders</h3>
+                <div class="space-y-4">
+                    <div class="border border-stone-200 rounded-xl p-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-stone-800">Order #29381</span>
+                            <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded">In Transit</span>
+                        </div>
+                        <p class="text-sm text-stone-500 mb-3">Levi's 501 Denim, Flannel Shirt</p>
+                        <button class="text-emerald-600 text-sm font-semibold hover:underline">Track Order</button>
+                    </div>
+                    <div class="border border-stone-200 rounded-xl p-4 opacity-70">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-stone-800">Order #29102</span>
+                            <span class="text-xs font-bold bg-stone-100 text-stone-500 px-2 py-1 rounded">Delivered</span>
+                        </div>
+                        <p class="text-sm text-stone-500 mb-3">Vintage Band Tee</p>
+                        <button class="text-emerald-600 text-sm font-semibold hover:underline">Buy Again</button>
+                    </div>
+                </div>
+
+                <button onclick="logout()" class="w-full border border-red-200 text-red-500 py-3 rounded-xl font-bold hover:bg-red-50 transition">Log Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-0 sm:p-4 overflow-y-auto" onclick="if(event.target === this) closeProductModal()">
+        <div class="min-h-full sm:min-h-0 flex items-center justify-center py-10">
+            <div class="bg-white rounded-none sm:rounded-2xl shadow-2xl max-w-4xl w-full mx-auto overflow-hidden flex flex-col md:flex-row fade-in relative">
+                <button onclick="closeProductModal()" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur rounded-full w-10 h-10 flex items-center justify-center hover:bg-stone-100 transition shadow-sm">
+                    <i class="fa-solid fa-times text-stone-800"></i>
+                </button>
+                <div class="w-full md:w-1/2 aspect-[4/5] md:aspect-square bg-stone-100 relative">
+                    <img id="modalImage" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/2 p-6 sm:p-10 flex flex-col">
+                    <div class="mb-auto">
+                        <div id="modalBadge" class="inline-block mb-4 text-xs font-bold tracking-wider uppercase"></div>
+                        <h2 id="modalTitle" class="text-3xl font-bold mb-2 text-stone-900 leading-tight"></h2>
+                        <p id="modalPrice" class="text-2xl text-emerald-700 font-bold mb-6"></p>
+                        <div class="space-y-5 mb-8">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-stone-50 p-3 rounded-lg"><p class="text-xs text-stone-500 uppercase font-bold mb-1">Kondisi</p><p id="modalCondition" class="font-medium text-stone-800"></p></div>
+                                <div class="bg-stone-50 p-3 rounded-lg"><p class="text-xs text-stone-500 uppercase font-bold mb-1">Ukuran</p><p id="modalSize" class="font-medium text-stone-800"></p></div>
+                            </div>
+                            <div><p class="text-xs text-stone-500 uppercase font-bold mb-1">Deskripsi</p><p id="modalDetails" class="text-sm leading-relaxed text-stone-600"></p></div>
+                            <div><p class="text-xs text-stone-500 uppercase font-bold mb-1">Brand</p><p id="modalBrand" class="text-sm font-medium text-emerald-700"></p></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 pt-4 border-t border-stone-100">
+                        <button onclick="addToCartFromModal()" id="modalAddCart" class="flex-1 bg-emerald-700 text-white py-4 rounded-xl font-bold hover:bg-emerald-600 transition shadow-lg shadow-emerald-700/20 flex justify-center items-center gap-2"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+                        <button onclick="toggleWishlistFromModal()" id="modalWishlistBtn" class="w-14 flex-shrink-0 border-2 border-stone-200 rounded-xl hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition flex items-center justify-center"><i class="fa-solid fa-heart"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFICATION MODAL -->
+    <div id="verifyModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onclick="if(event.target === this) toggleVerify()">
+        <div class="bg-white w-full sm:w-[500px] sm:rounded-2xl rounded-t-3xl p-6 sm:p-10 transform translate-y-full transition-transform duration-300" id="verifyContent">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2 class="text-2xl font-bold text-stone-900">Quality Verification</h2>
+                <p class="text-stone-500 mt-2">Setiap item melalui proses quality check ketat sebelum dikirim ke kamu.</p>
+            </div>
+            <div class="space-y-6 relative">
+                <div class="absolute left-[19px] top-2 bottom-2 w-0.5 bg-stone-200"></div>
+                <div class="relative pl-12 flex gap-4">
+                    <div class="absolute left-0 w-10 h-10 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center z-10"><i class="fa-solid fa-eye text-emerald-600 text-sm"></i></div>
+                    <div><h4 class="font-bold text-stone-800">Visual Inspection</h4><p class="text-sm text-stone-500">Memeriksa noda, sobekan, dan cacat kain di bawah cahaya UV.</p></div>
+                </div>
+                <div class="relative pl-12 flex gap-4">
+                    <div class="absolute left-0 w-10 h-10 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center z-10"><i class="fa-solid fa-pump-soap text-emerald-600 text-sm"></i></div>
+                    <div><h4 class="font-bold text-stone-800">Sanitization & Wash</h4><p class="text-sm text-stone-500">Semua pakaian dicuci dengan deterjen eco-friendly.</p></div>
+                </div>
+                <div class="relative pl-12 flex gap-4">
+                    <div class="absolute left-0 w-10 h-10 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center z-10"><i class="fa-solid fa-tag text-emerald-600 text-sm"></i></div>
+                    <div><h4 class="font-bold text-stone-800">Authenticity Check</h4><p class="text-sm text-stone-500">Memverifikasi brand high-end untuk memastikan keaslian.</p></div>
+                </div>
+            </div>
+            <button onclick="toggleVerify()" class="w-full mt-8 bg-stone-100 text-stone-800 py-3 rounded-xl font-bold hover:bg-stone-200 transition">Tutup</button>
+        </div>
+    </div>
+
+    <!-- CHATBOT MODAL -->
+    <div id="chatModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onclick="if(event.target === this) toggleChat()">
+        <div class="bg-white w-full h-[80vh] sm:h-[600px] sm:w-[400px] sm:rounded-2xl rounded-t-3xl flex flex-col transform translate-y-full transition-transform duration-300" id="chatContent">
+            <div class="p-4 border-b border-stone-200 flex justify-between items-center bg-emerald-700 text-white sm:rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="fa-solid fa-robot"></i></div>
+                    <div><h3 class="font-bold text-sm">Reloop Assistant</h3><span class="text-xs text-emerald-100 flex items-center gap-1"><span class="w-2 h-2 bg-green-400 rounded-full"></span> Online</span></div>
+                </div>
+                <button onclick="toggleChat()" class="text-white/80 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50">
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex-shrink-0 flex items-center justify-center text-emerald-600"><i class="fa-solid fa-robot text-xs"></i></div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-stone-700 max-w-[80%]">Halo! Ada yang bisa saya bantu mencari hari ini?</div>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-t border-stone-200">
+                <div class="flex gap-2">
+                    <input type="text" id="chatInput" placeholder="Ketik pesan..." class="flex-1 bg-stone-100 rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" onkeypress="if(event.key === 'Enter') sendChat()">
+                    <button onclick="sendChat()" class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center hover:bg-emerald-600 transition"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECOMMENDATIONS MODAL -->
+    <div id="recsModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" onclick="if(event.target === this) toggleRecs()">
+        <div class="min-h-screen px-4 py-10 flex items-center justify-center">
+            <div class="bg-white w-full max-w-4xl rounded-2xl p-6 shadow-2xl relative fade-in">
+                <button onclick="toggleRecs()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-900 w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100"><i class="fa-solid fa-times"></i></button>
+                <div class="text-center mb-8">
+                    <span class="text-emerald-600 font-bold uppercase tracking-wider text-xs">Pilihan Spesial Untukmu</span>
+                    <h2 class="text-3xl font-bold text-stone-900 mt-2">Rekomendasi AI</h2>
+                    <p class="text-stone-500 mt-2">Berdasarkan riwayat browsing dan gaya vintage favoritmu.</p>
+                </div>
+                <div id="recsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
+                <div class="mt-8 text-center">
+                    <button onclick="toggleRecs()" class="text-emerald-600 font-bold hover:underline">Kembali Belanja</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="relative h-[75vh] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&q=80&w=2070" class="w-full h-full object-cover" style="filter: brightness(0.65);">
+            <div class="absolute inset-0 bg-gradient-to-t from-stone-900/60 to-transparent"></div>
+        </div>
+        <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto fade-in">
+            <span class="inline-block py-1 px-3 border border-white/30 rounded-full text-xs font-bold tracking-[0.2em] mb-6 uppercase backdrop-blur-md">Sustainable Fashion</span>
+            <h2 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight">Give Clothes a<br>Second Life</h2>
+            <p class="max-w-xl mx-auto mb-10 text-lg text-stone-200 font-light">Kurasi pakaian pilihan yang tidak hanya membuatmu tampil beda, tapi juga menjaga bumi untuk masa depan.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#collection" class="bg-white text-stone-900 px-8 py-4 rounded-full font-bold hover:bg-emerald-50 transition duration-300 shadow-xl">Explore Collection</a>
+                <a href="#" class="border border-white/30 bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold hover:bg-white/20 transition duration-300">How it Works</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter & Sort Bar -->
+    <section class="sticky top-20 z-30 bg-white/95 backdrop-blur border-b border-stone-200 py-4 shadow-sm transition-all">
+        <div class="max-w-7xl mx-auto px-4 flex gap-3 overflow-x-auto no-scrollbar items-center">
+            <select onchange="updateFilters('category', this.value)" class="px-4 py-2.5 rounded-lg border border-stone-200 bg-stone-50 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none min-w-[140px]">
+                <option value="all">Semua Kategori</option>
+                <option value="tops">Tops</option>
+                <option value="bottoms">Bottoms</option>
+                <option value="outerwear">Outerwear</option>
+            </select>
+            <select onchange="updateFilters('size', this.value)" class="px-4 py-2.5 rounded-lg border border-stone-200 bg-stone-50 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none min-w-[120px]">
+                <option value="all">Semua Ukuran</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+            </select>
+            <select onchange="updateFilters('condition', this.value)" class="px-4 py-2.5 rounded-lg border border-stone-200 bg-stone-50 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none min-w-[140px]">
+                <option value="all">Semua Kondisi</option>
+                <option value="like-new">Like New</option>
+                <option value="excellent">Excellent</option>
+                <option value="good">Good</option>
+            </select>
+            <div class="flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-lg text-sm bg-stone-50 min-w-[200px]">
+                <span class="text-stone-400 text-xs font-bold">Rp</span>
+                <input type="number" id="minPrice" placeholder="Min" class="bg-transparent w-16 outline-none text-stone-700" onkeyup="debounceFilter()">
+                <span class="text-stone-400">-</span>
+                <input type="number" id="maxPrice" placeholder="Max" class="bg-transparent w-16 outline-none text-stone-700" onkeyup="debounceFilter()">
+            </div>
+            <div class="flex-1 min-w-[100px] flex justify-end">
+                <select onchange="sortProducts(this.value)" class="px-4 py-2.5 rounded-lg border border-stone-200 bg-white text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="newest">Terbaru</option>
+                    <option value="price-low">Harga Terendah</option>
+                    <option value="price-high">Harga Tertinggi</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Banner -->
+    <section class="py-16 max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="group relative h-72 overflow-hidden rounded-3xl bg-stone-200 cursor-pointer shadow-md hover:shadow-xl transition duration-500">
+                <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=1000" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
+                <div class="absolute bottom-6 left-6"><h3 class="text-white text-2xl font-bold mb-1">Denim Series</h3></div>
+            </div>
+            <div class="group relative h-72 overflow-hidden rounded-3xl bg-stone-200 cursor-pointer shadow-md hover:shadow-xl transition duration-500">
+                <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1000" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
+                <div class="absolute bottom-6 left-6"><h3 class="text-white text-2xl font-bold mb-1">Outerwear</h3></div>
+            </div>
+            <div class="group relative h-72 overflow-hidden rounded-3xl bg-stone-200 cursor-pointer shadow-md hover:shadow-xl transition duration-500">
+                <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&q=80&w=1000" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
+                <div class="absolute bottom-6 left-6"><h3 class="text-white text-2xl font-bold mb-1">Rare Finds</h3></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Collection -->
+    <section id="collection" class="py-12 max-w-7xl mx-auto px-4 min-h-[500px]">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4">
+            <div>
+                <h2 class="text-3xl font-bold italic text-stone-900">New Arrivals</h2>
+                <p class="text-stone-500 mt-2">Update setiap minggu pukul 19:00 WIB.</p>
+            </div>
+            <div id="resultCount" class="text-sm font-medium text-stone-500 bg-white px-3 py-1 rounded-full border border-stone-200 shadow-sm">Menampilkan 8 barang</div>
+        </div>
+        <div id="productsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10"></div>
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center">
+            <h3 class="text-xl font-bold text-stone-800 mb-2">Tidak ada barang ditemukan</h3>
+            <p class="text-stone-500">Coba ubah filter pencarianmu.</p>
+            <button onclick="resetFilters()" class="mt-6 text-emerald-600 font-semibold hover:underline">Reset Filter</button>
+        </div>
+    </section>
+
+    <!-- Trust Indicators -->
+    <section class="bg-emerald-50 py-16 mt-10 border-y border-emerald-100">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div><i class="fa-solid fa-shield-halved text-3xl text-emerald-700 mb-3"></i><h4 class="font-bold">Quality Checked</h4><p class="text-xs text-stone-500">Setiap item diperiksa oleh ahlinya</p></div>
+            <div><i class="fa-solid fa-rotate-left text-3xl text-emerald-700 mb-3"></i><h4 class="font-bold">7 Hari Return</h4><p class="text-xs text-stone-500">Garansi uang kembali jika tidak cocok</p></div>
+            <div><i class="fa-solid fa-truck-fast text-3xl text-emerald-700 mb-3"></i><h4 class="font-bold">Fast Shipping</h4><p class="text-xs text-stone-500">Pengiriman cepat ke seluruh Indonesia</p></div>
+            <div><i class="fa-solid fa-leaf text-3xl text-emerald-700 mb-3"></i><h4 class="font-bold">Eco-Friendly</h4><p class="text-xs text-stone-500">Dampak positif untuk lingkungan</p></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer" class="bg-stone-900 text-stone-400 py-16 pb-24">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div class="col-span-1 md:col-span-1">
+                <h2 class="text-2xl font-bold text-white mb-6 tracking-tighter">RELOOP.</h2>
+                <p class="text-sm leading-relaxed text-stone-500">Kurasi pakaian bekas berkualitas tinggi untuk gaya hidup yang lebih berkelanjutan.</p>
+            </div>
+            <div><h4 class="text-white font-semibold mb-6 uppercase text-xs tracking-widest">Shop</h4><ul class="space-y-3 text-sm"><li><a href="#" class="hover:text-emerald-500 transition">Men's</a></li><li><a href="#" class="hover:text-emerald-500 transition">Women's</a></li><li><a href="#" class="hover:text-emerald-500 transition">New Arrivals</a></li></ul></div>
+            <div><h4 class="text-white font-semibold mb-6 uppercase text-xs tracking-widest">Support</h4><ul class="space-y-3 text-sm"><li><a href="#" class="hover:text-emerald-500 transition">Shipping Policy</a></li><li><a href="#" class="hover:text-emerald-500 transition">Return & Exchange</a></li><li><a href="#" class="hover:text-emerald-500 transition">Contact Us</a></li></ul></div>
+            <div><h4 class="text-white font-semibold mb-6 uppercase text-xs tracking-widest">Join the Loop</h4><p class="text-xs mb-4 text-stone-500">Dapatkan info drop barang terbaru.</p><div class="flex"><input type="email" placeholder="Email kamu" class="bg-stone-800 border border-stone-700 px-4 py-3 w-full rounded-l-lg focus:outline-none"><button class="bg-emerald-600 text-white px-4 py-3 rounded-r-lg hover:bg-emerald-500 transition font-semibold">Join</button></div></div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 mt-16 pt-8 border-t border-stone-800 text-center text-xs font-medium text-stone-600 uppercase tracking-widest">© 2024 Reloop Thrift Store.</div>
+    </footer>
+
+    <!-- Floating Action Button (Trigger) -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button onclick="toggleBottomNav()" id="fabBtn" class="fab-pulse w-14 h-14 bg-emerald-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-emerald-500 hover:scale-105 transition duration-300 group">
+            <i id="fabIcon" class="fa-solid fa-bars text-xl transition-transform duration-300 group-hover:rotate-90"></i>
+        </button>
+    </div>
+
+    <!-- Bottom Navigation Bar (Hidden by default) -->
+    <div id="bottomNav" class="fixed bottom-0 left-0 right-0 z-40 transform translate-y-full bg-white/95 backdrop-blur-xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-stone-200/50">
+        <!-- Handle for visual cue -->
+        <div class="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mt-3 mb-1 cursor-pointer" onclick="toggleBottomNav()"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-around items-center">
+                <button onclick="toggleVerify(); toggleBottomNav()" class="flex flex-col items-center gap-2 group w-16 text-stone-500 hover:text-emerald-600 transition">
+                    <div class="w-12 h-12 rounded-2xl bg-stone-100 group-hover:bg-emerald-100 flex items-center justify-center transition">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <span class="text-[11px] font-bold uppercase tracking-wide">Verify</span>
+                </button>
+                
+                <button onclick="toggleChat(); toggleBottomNav()" class="flex flex-col items-center gap-2 group w-16 text-stone-500 hover:text-emerald-600 transition relative">
+                    <div class="w-12 h-12 rounded-2xl bg-stone-100 group-hover:bg-emerald-100 flex items-center justify-center transition">
+                        <i class="fa-solid fa-comments text-lg"></i>
+                    </div>
+                    <span class="text-[11px] font-bold uppercase tracking-wide">Chat</span>
+                    <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                
+                <button onclick="toggleRecs(); toggleBottomNav()" class="flex flex-col items-center gap-2 group w-16 text-stone-500 hover:text-emerald-600 transition">
+                    <div class="w-12 h-12 rounded-2xl bg-stone-100 group-hover:bg-emerald-100 flex items-center justify-center transition">
+                        <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                    </div>
+                    <span class="text-[11px] font-bold uppercase tracking-wide">Recs</span>
+                </button>
+            </div>
+        </div>
+        <!-- Spacer for safe area on phones -->
+        <div class="h-4"></div>
+    </div>
+
+    <script>
+        // --- Data & State ---
+        const products = [
+            { id: 1, name: "Oversized Flannel Shirt", price: 125000, image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1000", condition: "Like New", size: "L", brand: "Uniqlo", category: "tops", description: "Kemeja flannel oversized dengan pattern kotak-kotak klasik warna merah navy. Kondisi sangat baik tanpa cacat.", stock: true },
+            { id: 2, name: "Classic Harrington Jacket", price: 250000, image: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000", condition: "Excellent", size: "M", brand: "Baracuta", category: "outerwear", description: "Jaket Harrington ikonik dengan lining tartan merah. Piece langka dari brand legendaris.", stock: false },
+            { id: 3, name: "Vintage 90s Graphic Tee", price: 185000, image: "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?auto=format&fit=crop&q=80&w=1000", condition: "Good", size: "XL", brand: "Band Merch", category: "tops", description: "Kaos band original dari era 90an. Print masih tajam, fabric masih tebal.", stock: true },
+            { id: 4, name: "Levi's 501 Indigo Denim", price: 320000, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1000", condition: "Well Worn", size: "32", brand: "Levi's", category: "bottoms", description: "Celana denim Levi's 501 dengan fading natural yang sempurna.", stock: true },
+            { id: 5, name: "Vintage Leather Bomber", price: 450000, image: "https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&q=80&w=1000", condition: "Excellent", size: "L", brand: "Schott", category: "outerwear", description: "Jaket bomber kulit asli dengan patina yang cantik. Investasi fashion.", stock: true },
+            { id: 6, name: "Vintage Band Tee Collection", price: 165000, image: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&q=80&w=1000", condition: "Good", size: "M", brand: "Various", category: "tops", description: "Koleksi kaos band vintage dengan berbagai design ikonik.", stock: true },
+            { id: 7, name: "Carhartt Work Pants", price: 280000, image: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&q=80&w=1000", condition: "Like New", size: "32", brand: "Carhartt", category: "bottoms", description: "Celana kerja Carhartt yang terkenal durabel. Material tebal.", stock: true },
+            { id: 8, name: "Champion Reverse Weave", price: 195000, image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=1000", condition: "Excellent", size: "L", brand: "Champion", category: "tops", description: "Hoodie Champion Reverse Weave yang legendary. Anti-shrink.", stock: true }
+        ];
+
+        let state = {
+            cart: JSON.parse(localStorage.getItem('reloop_cart')) || [],
+            wishlist: JSON.parse(localStorage.getItem('reloop_wishlist')) || [],
+            filters: { category: 'all', size: 'all', condition: 'all', minPrice: 0, maxPrice: Infinity },
+            sort: 'newest',
+            user: { name: "Sarah Jenkins", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" }
+        };
+
+        let currentProduct = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            updateCartCount();
+            updateWishlistCount();
+            renderCart();
+            renderWishlist();
+        });
+
+        // --- Bottom Nav Logic ---
+        function toggleBottomNav() {
+            const nav = document.getElementById('bottomNav');
+            const icon = document.getElementById('fabIcon');
+            nav.classList.toggle('translate-y-full');
+            
+            // Rotate icon to indicate state
+            if (nav.classList.contains('translate-y-full')) {
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            } else {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            }
+        }
+
+        // --- Features: Account & Bottom Modals ---
+
+        function toggleAccount() {
+            const sidebar = document.getElementById('accountModal');
+            const backdrop = document.getElementById('accountBackdrop');
+            const isOpen = !sidebar.classList.contains('translate-x-full');
+            if (isOpen) {
+                sidebar.classList.add('translate-x-full');
+                backdrop.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+            }
+        }
+
+        function toggleVerify() {
+            const modal = document.getElementById('verifyModal');
+            const content = document.getElementById('verifyContent');
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                modal.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-y-full'), 10);
+            } else {
+                content.classList.add('translate-y-full');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        function toggleChat() {
+            const modal = document.getElementById('chatModal');
+            const content = document.getElementById('chatContent');
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                modal.classList.remove('hidden');
+                setTimeout(() => content.classList.remove('translate-y-full'), 10);
+                document.getElementById('chatInput').focus();
+            } else {
+                content.classList.add('translate-y-full');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const container = document.getElementById('chatMessages');
+            container.innerHTML += `<div class="flex gap-3 justify-end fade-in"><div class="bg-emerald-700 text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[80%]">${text}</div></div>`;
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            setTimeout(() => {
+                container.innerHTML += `<div class="flex gap-3 fade-in"><div class="w-8 h-8 rounded-full bg-emerald-100 flex-shrink-0 flex items-center justify-center text-emerald-600"><i class="fa-solid fa-robot text-xs"></i></div><div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-stone-700 max-w-[80%]">Terima kasih! Tim Reloop akan segera membantumu.</div></div>`;
+                container.scrollTop = container.scrollHeight;
+            }, 1500);
+        }
+
+        function toggleRecs() {
+            const modal = document.getElementById('recsModal');
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                const recs = [...products].sort(() => 0.5 - Math.random()).slice(0, 4);
+                const grid = document.getElementById('recsGrid');
+                grid.innerHTML = recs.map(p => `
+                    <div class="cursor-pointer group" onclick="toggleRecs(); openProductModal(${p.id})">
+                        <div class="relative aspect-square overflow-hidden rounded-xl mb-3">
+                            <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-110 transition">
+                            <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
+                            <div class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-emerald-800">98% Match</div>
+                        </div>
+                        <h4 class="font-bold text-sm line-clamp-1">${p.name}</h4>
+                        <p class="text-emerald-700 font-bold text-sm">Rp ${p.price.toLocaleString('id-ID')}</p>
+                    </div>
+                `).join('');
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // --- Core Logic & Existing Features ---
+
+        function saveState() {
+            localStorage.setItem('reloop_cart', JSON.stringify(state.cart));
+            localStorage.setItem('reloop_wishlist', JSON.stringify(state.wishlist));
+            updateCartCount();
+            updateWishlistCount();
+        }
+
+        function getFilteredProducts() {
+            let result = products.filter(p => {
+                return (state.filters.category === 'all' || p.category === state.filters.category) &&
+                       (state.filters.size === 'all' || p.size === state.filters.size) &&
+                       (state.filters.condition === 'all' || p.condition.toLowerCase().replace(' ', '-') === state.filters.condition) &&
+                       (p.price >= state.filters.minPrice && p.price <= state.filters.maxPrice);
+            });
+            if (state.sort === 'price-low') result.sort((a, b) => a.price - b.price);
+            else if (state.sort === 'price-high') result.sort((a, b) => b.price - a.price);
+            else result.sort((a, b) => b.id - a.id);
+            return result;
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const empty = document.getElementById('emptyState');
+            const resultCount = document.getElementById('resultCount');
+            const filtered = getFilteredProducts();
+            grid.innerHTML = '';
+            resultCount.textContent = `Menampilkan ${filtered.length} barang`;
+
+            if (filtered.length === 0) {
+                empty.classList.remove('hidden');
+                empty.classList.add('flex');
+            } else {
+                empty.classList.add('hidden');
+                empty.classList.remove('flex');
+                filtered.forEach((p, index) => {
+                    const isInWishlist = state.wishlist.some(item => item.id === p.id);
+                    const card = document.createElement('div');
+                    card.className = 'group fade-in';
+                    card.style.animationDelay = `${index * 50}ms`;
+                    card.innerHTML = `
+                        <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-stone-100 mb-4 cursor-pointer" onclick="openProductModal(${p.id})">
+                            <img src="${p.image}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            <div class="absolute top-3 left-3 ${p.stock ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-800 text-white'} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm z-10">
+                                ${p.stock ? p.condition : 'Sold Out'}
+                            </div>
+                            <button onclick="event.stopPropagation(); toggleWishlist(${p.id})" class="absolute top-3 right-3 bg-white/80 backdrop-blur-sm w-9 h-9 rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition duration-200 z-10">
+                                <i class="${isInWishlist ? 'fa-solid text-red-500' : 'fa-regular text-stone-500'} fa-heart text-sm"></i>
+                            </button>
+                            ${!p.stock ? `
+                                <div class="absolute inset-0 bg-stone-900/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+                                    <span class="bg-white/90 text-stone-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">Sold Out</span>
+                                </div>
+                            ` : `
+                                <div class="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent">
+                                    <button onclick="event.stopPropagation(); addToCart(${p.id})" class="w-full bg-white text-stone-900 py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-600 hover:text-white transition shadow-lg flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-plus"></i> Add to Cart
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-base text-stone-800 leading-tight mb-1 line-clamp-2 hover:text-emerald-600 transition" onclick="openProductModal(${p.id})">${p.name}</h3>
+                            </div>
+                            <div class="flex justify-between items-end mt-2">
+                                <p class="text-emerald-700 font-bold text-lg">Rp ${p.price.toLocaleString('id-ID')}</p>
+                                <span class="text-xs font-semibold text-stone-400 bg-stone-100 px-2 py-1 rounded border border-stone-200">${p.brand}</span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            if (state.cart.length === 0) {
+                container.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60"><i class="fa-solid fa-basket-shopping text-4xl text-stone-300"></i><p class="text-stone-500">Keranjangmu masih kosong.</p></div>`;
+                document.getElementById('cartSubtotal').innerText = 'Rp 0';
+                document.getElementById('cartTotal').innerText = 'Rp 0';
+                return;
+            }
+            let total = 0;
+            container.innerHTML = state.cart.map(item => {
+                const product = products.find(p => p.id === item.id);
+                total += product.price * item.qty;
+                return `
+                    <div class="flex gap-4 py-4 border-b border-stone-100 last:border-0 fade-in">
+                        <img src="${product.image}" class="w-20 h-24 object-cover rounded-lg bg-stone-100">
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div><h4 class="font-bold text-stone-800 text-sm line-clamp-1">${product.name}</h4><p class="text-xs text-stone-500 mt-1">${product.size} / ${product.condition}</p></div>
+                            <div class="flex justify-between items-end">
+                                <div class="flex items-center border border-stone-200 rounded-lg"><button onclick="updateCartQty(${item.id}, -1)" class="px-2 py-1 hover:bg-stone-100">-</button><span class="text-sm font-medium w-6 text-center">${item.qty}</span><button onclick="updateCartQty(${item.id}, 1)" class="px-2 py-1 hover:bg-stone-100">+</button></div>
+                                <p class="font-bold text-emerald-700">Rp ${(product.price * item.qty).toLocaleString('id-ID')}</p>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+            document.getElementById('cartSubtotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+            document.getElementById('cartTotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        function renderWishlist() {
+            const container = document.getElementById('wishlistItems');
+            if (state.wishlist.length === 0) {
+                container.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60"><i class="fa-regular fa-heart text-4xl text-stone-300"></i><p class="text-stone-500">Belum ada item wishlist.</p></div>`;
+                return;
+            }
+            container.innerHTML = state.wishlist.map(item => {
+                const product = products.find(p => p.id === item.id);
+                return `
+                    <div class="flex gap-4 py-2 fade-in group">
+                        <div class="relative w-20 h-24 flex-shrink-0"><img src="${product.image}" class="w-full h-full object-cover rounded-lg bg-stone-100"><button onclick="toggleWishlist(${product.id})" class="absolute -top-2 -right-2 bg-white text-red-500 w-6 h-6 rounded-full shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times text-xs"></i></button></div>
+                        <div class="flex flex-col justify-between flex-1 py-1"><div><h4 class="font-bold text-stone-800 text-sm line-clamp-2 leading-tight">${product.name}</h4><p class="text-emerald-700 font-bold text-sm mt-1">Rp ${product.price.toLocaleString('id-ID')}</p></div>${product.stock ? `<button onclick="addToCart(${product.id}); toggleWishlist(${product.id})" class="text-xs font-bold text-stone-500 hover:text-emerald-600 transition flex items-center gap-1"><i class="fa-solid fa-cart-plus"></i> Pindahkan ke Keranjang</button>` : `<span class="text-xs font-bold text-red-500">Sold Out</span>`}</div>
+                    </div>`;
+            }).join('');
+        }
+
+        function addToCart(id) {
+            if (!state.cart.some(item => item.id === id)) { state.cart.push({ id: id, qty: 1 }); } 
+            else { state.cart.find(item => item.id === id).qty++; }
+            saveState(); renderCart(); showToast('Berhasil ditambahkan ke keranjang!', 'success');
+        }
+        function updateCartQty(id, change) {
+            const item = state.cart.find(i => i.id === id);
+            if (item) { item.qty += change; if (item.qty <= 0) { state.cart = state.cart.filter(i => i.id !== id); } saveState(); renderCart(); }
+        }
+        function toggleWishlist(id) {
+            const index = state.wishlist.findIndex(item => item.id === id);
+            if (index === -1) { state.wishlist.push({ id: id }); showToast('Ditambahkan ke Wishlist', 'success'); } 
+            else { state.wishlist.splice(index, 1); showToast('Dihapus dari Wishlist', 'default'); }
+            saveState(); renderProducts(); renderWishlist();
+        }
+        function checkout() { if(state.cart.length) { showToast('Redirecting to payment...', 'success'); setTimeout(() => { state.cart = []; saveState(); renderCart(); toggleCart(); showToast('Terima kasih!', 'success'); }, 1500); } }
+        function updateFilters(key, value) { state.filters[key] = value; renderProducts(); }
+        function sortProducts(val) { state.sort = val; renderProducts(); }
+        function resetFilters() { state.filters = { category: 'all', size: 'all', condition: 'all', minPrice: 0, maxPrice: Infinity }; document.querySelectorAll('select').forEach(s => s.selectedIndex = 0); document.getElementById('minPrice').value = ''; document.getElementById('maxPrice').value = ''; renderProducts(); }
+        let debounceTimer; function debounceFilter() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { const min = parseInt(document.getElementById('minPrice').value) || 0; const max = parseInt(document.getElementById('maxPrice').value) || Infinity; state.filters.minPrice = min; state.filters.maxPrice = max; renderProducts(); }, 500); }
+
+        // --- UI Interactions ---
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); }
+        function toggleSearch() {
+            const modal = document.getElementById('searchModal'), content = document.getElementById('searchContent'), isHidden = modal.classList.contains('hidden');
+            if (isHidden) { modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); document.getElementById('searchInput').focus(); }, 10); }
+            else { modal.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); document.getElementById('searchInput').value = ''; document.getElementById('searchResults').innerHTML = ''; }, 300); }
+        }
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase(), resultsDiv = document.getElementById('searchResults');
+            if (query.length < 2) { resultsDiv.innerHTML = '<p class="text-stone-400 text-sm text-center py-4">Ketik minimal 2 karakter...</p>'; return; }
+            const results = products.filter(p => p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query));
+            if (!results.length) { resultsDiv.innerHTML = '<p class="text-stone-400 text-sm text-center py-4">Tidak ada hasil.</p>'; return; }
+            resultsDiv.innerHTML = results.map(p => `<div onclick="openProductModal(${p.id}); toggleSearch()" class="flex gap-4 p-3 hover:bg-stone-50 rounded-xl cursor-pointer transition border border-transparent hover:border-stone-100 group"><img src="${p.image}" class="w-16 h-16 object-cover rounded-lg bg-stone-100"><div class="flex-1 flex flex-col justify-center"><h4 class="font-semibold text-stone-800 text-sm group-hover:text-emerald-600 transition">${p.name}</h4><div class="flex justify-between items-center mt-1"><span class="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded">${p.size}</span><span class="text-sm text-emerald-700 font-bold">Rp ${p.price.toLocaleString('id-ID')}</span></div></div></div>`).join('');
+        }
+        function toggleCart() {
+            const sidebar = document.getElementById('cartSidebar'), backdrop = document.getElementById('cartBackdrop'), isOpen = !sidebar.classList.contains('translate-x-full');
+            if (isOpen) { sidebar.classList.add('translate-x-full'); backdrop.classList.add('hidden'); } else { sidebar.classList.remove('translate-x-full'); backdrop.classList.remove('hidden'); }
+        }
+        function toggleWishlist() {
+            const sidebar = document.getElementById('wishlistSidebar'), backdrop = document.getElementById('wishlistBackdrop'), isOpen = !sidebar.classList.contains('translate-x-full');
+            if (isOpen) { sidebar.classList.add('translate-x-full'); backdrop.classList.add('hidden'); } else { sidebar.classList.remove('translate-x-full'); backdrop.classList.remove('hidden'); }
+        }
+        function openProductModal(id) {
+            currentProduct = products.find(p => p.id === id); if (!currentProduct) return;
+            document.getElementById('modalImage').src = currentProduct.image; document.getElementById('modalTitle').innerText = currentProduct.name;
+            document.getElementById('modalPrice').innerText = 'Rp ' + currentProduct.price.toLocaleString('id-ID'); document.getElementById('modalCondition').innerText = currentProduct.condition;
+            document.getElementById('modalSize').innerText = currentProduct.size; document.getElementById('modalBrand').innerText = currentProduct.brand;
+            document.getElementById('modalDetails').innerText = currentProduct.description;
+            const badge = document.getElementById('modalBadge');
+            if (!currentProduct.stock) { badge.innerHTML = '<span class="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase">Sold Out</span>'; }
+            else if (currentProduct.condition === 'Like New') { badge.innerHTML = '<span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Best Quality</span>'; }
+            else { badge.innerHTML = `<span class="bg-stone-100 text-stone-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">${currentProduct.condition}</span>`; }
+            const addBtn = document.getElementById('modalAddCart'), wishBtn = document.getElementById('modalWishlistBtn'), isInWishlist = state.wishlist.some(i => i.id === currentProduct.id);
+            if (!currentProduct.stock) { addBtn.disabled = true; addBtn.classList.add('opacity-50', 'cursor-not-allowed'); addBtn.innerHTML = 'Stok Habis'; }
+            else { addBtn.disabled = false; addBtn.classList.remove('opacity-50', 'cursor-not-allowed'); addBtn.innerHTML = '<i class="fa-solid fa-cart-plus"></i> Add to Cart'; }
+            if (isInWishlist) { wishBtn.classList.add('bg-red-50', 'border-red-500', 'text-red-500'); wishBtn.classList.remove('text-stone-500', 'border-stone-200'); }
+            else { wishBtn.classList.remove('bg-red-50', 'border-red-500', 'text-red-500'); wishBtn.classList.add('text-stone-500', 'border-stone-200'); }
+            const modal = document.getElementById('productModal'); modal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+        }
+        function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); document.body.style.overflow = 'auto'; currentProduct = null; }
+        function addToCartFromModal() { if (currentProduct && currentProduct.stock) { addToCart(currentProduct.id); const btn = document.getElementById('modalAddCart'); const originalContent = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Added'; setTimeout(() => { btn.innerHTML = originalContent; }, 2000); } }
+        function toggleWishlistFromModal() { if (currentProduct) { toggleWishlist(currentProduct.id); const isInWishlist = state.wishlist.some(i => i.id === currentProduct.id); const wishBtn = document.getElementById('modalWishlistBtn'); if (isInWishlist) { wishBtn.classList.add('bg-red-50', 'border-red-500', 'text-red-500'); wishBtn.classList.remove('text-stone-500', 'border-stone-200'); } else { wishBtn.classList.remove('bg-red-50', 'border-red-500', 'text-red-500'); wishBtn.classList.add('text-stone-500', 'border-stone-200'); } } }
+        function updateCartCount() { const count = state.cart.reduce((sum, item) => sum + item.qty, 0), badge = document.getElementById('cartCount'); badge.innerText = count; if (count > 0) { badge.classList.remove('hidden'); setTimeout(() => badge.classList.remove('scale-0'), 10); } else { badge.classList.add('scale-0'); setTimeout(() => badge.classList.add('hidden'), 200); } }
+        function updateWishlistCount() { const count = state.wishlist.length, badge = document.getElementById('wishlistCount'); badge.innerText = count; if (count > 0) { badge.classList.remove('hidden'); setTimeout(() => badge.classList.remove('scale-0'), 10); } else { badge.classList.add('scale-0'); setTimeout(() => badge.classList.add('hidden'), 200); } }
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer'), toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-800' : 'bg-stone-800', icon = type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            toast.className = `${bgClass} text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto min-w-[300px]`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><span class="font-medium text-sm">${message}</span>`; container.appendChild(toast);
+            requestAnimationFrame(() => { toast.classList.remove('translate-y-10', 'opacity-0'); });
+            setTimeout(() => { toast.classList.add('translate-y-10', 'opacity-0'); setTimeout(() => { toast.remove(); }, 300); }, 3000);
+        }
+    </script>
+</body>
+</html>
